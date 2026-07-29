@@ -78,7 +78,7 @@ jobs:
         with: { name: go2rtc_linux_armv6, path: go2rtc }
 
       - name: Build go2rtc_linux_mipsel
-        env: { GOOS: linux, GOARCH: mipsle }
+        env: { GOOS: linux, GOARCH: mipsle, GOMIPS: softfloat }
         run: go build -ldflags "-s -w" -trimpath
       - name: Upload go2rtc_linux_mipsel
         uses: actions/upload-artifact@v4
