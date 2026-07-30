@@ -1,4 +1,4 @@
-name: Build and Push
+name: Build go2rtc (from upstream)
 
 on:
   push:
@@ -7,15 +7,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-binaries:
-    name: Build (${{ matrix.target }})
+  build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write   # 如果需要上传 Release 则保留
     strategy:
       matrix:
         include:
-          # Windows
           - os: windows
             arch: amd64
             ext: .exe
@@ -28,7 +26,6 @@ jobs:
             arch: arm64
             ext: .exe
             output: go2rtc-windows-arm64.exe
-          # Linux
           - os: linux
             arch: amd64
             ext: ''
@@ -56,7 +53,6 @@ jobs:
             gomips: softfloat
             ext: ''
             output: go2rtc-linux-mipsel
-          # macOS
           - os: darwin
             arch: amd64
             ext: ''
@@ -65,7 +61,6 @@ jobs:
             arch: arm64
             ext: ''
             output: go2rtc-darwin-arm64
-          # FreeBSD
           - os: freebsd
             arch: amd64
             ext: ''
@@ -74,33 +69,41 @@ jobs:
             arch: arm64
             ext: ''
             output: go2rtc-freebsd-arm64
+
     env:
       CGO_ENABLED: 0
-      GOOS: ${{ matrix.os }}
-      GOARCH: ${{ matrix.arch }}
-      GOARM: ${{ matrix.arm_version }}
-      GOMIPS: ${{ matrix.gomips }}
+
     steps:
-      - name: Checkout
+      # ----- 关键：直接从原仓库拉取代码，而不是您的仓库 -----
+      - name: Checkout upstream code
         uses: actions/checkout@v4
+        with:
+          repository: AlexxIT/go2rtc   # 指定原仓库
+          ref: master                  # 可换为指定 tag 或 commit，例如 'v1.9.9'
+          fetch-depth: 1
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'  # 使用实际存在的版本
+          go-version: '1.23'  # 根据原仓库要求调整
 
-      - name: Install UPX
+      - name: Install UPX (optional)
         run: |
           sudo apt-get update
           sudo apt-get install -y upx
 
       - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          GOARM: ${{ matrix.arm_version }}
+          GOMIPS: ${{ matrix.gomips }}
         run: |
           go build -ldflags "-s -w" -trimpath -o ${{ matrix.output }}
 
-      - name: Compress with UPX (optional)
+      - name: UPX compress (ignore errors)
         run: |
-          upx --best --lzma ${{ matrix.output }} || true   # 允许失败（某些架构可能不支持）
+          upx --best --lzma ${{ matrix.output }} || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -108,9 +111,9 @@ jobs:
           name: ${{ matrix.output }}
           path: ${{ matrix.output }}
 
+  # 可选：将全部产物打包上传到 Release（如果您的仓库有 Release）
   release:
-    name: Release
-    needs: build-binaries
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -120,9 +123,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: List files (debug)
-        run: ls -R artifacts
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
