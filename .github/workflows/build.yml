@@ -124,8 +124,7 @@ jobs:
               uses: softprops/action-gh-release@v1
               if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
               with:
-                files: |
-                  go2rtc-linux-amd64
+                files: go2rtc-*
                   go2rtc-windows-amd64.exe
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
