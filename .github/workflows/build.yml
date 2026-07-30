@@ -10,122 +10,125 @@ on:
 
 jobs:
   build-binaries:
-    name: Build binaries
+    name: Build (${{ matrix.target }})
     runs-on: ubuntu-latest
-    env: { CGO_ENABLED: 0 }
-        permissions:
+    permissions:
       contents: write
+    strategy:
+      matrix:
+        include:
+          # Windows
+          - os: windows
+            arch: amd64
+            ext: .exe
+            output: go2rtc-windows-amd64.exe
+          - os: windows
+            arch: 386
+            ext: .exe
+            output: go2rtc-windows-386.exe
+          - os: windows
+            arch: arm64
+            ext: .exe
+            output: go2rtc-windows-arm64.exe
+          # Linux
+          - os: linux
+            arch: amd64
+            ext: ''
+            output: go2rtc-linux-amd64
+          - os: linux
+            arch: 386
+            ext: ''
+            output: go2rtc-linux-386
+          - os: linux
+            arch: arm64
+            ext: ''
+            output: go2rtc-linux-arm64
+          - os: linux
+            arch: arm
+            arm_version: 7
+            ext: ''
+            output: go2rtc-linux-armv7
+          - os: linux
+            arch: arm
+            arm_version: 6
+            ext: ''
+            output: go2rtc-linux-armv6
+          - os: linux
+            arch: mipsle
+            gomips: softfloat
+            ext: ''
+            output: go2rtc-linux-mipsel
+          # macOS
+          - os: darwin
+            arch: amd64
+            ext: ''
+            output: go2rtc-darwin-amd64
+          - os: darwin
+            arch: arm64
+            ext: ''
+            output: go2rtc-darwin-arm64
+          # FreeBSD
+          - os: freebsd
+            arch: amd64
+            ext: ''
+            output: go2rtc-freebsd-amd64
+          - os: freebsd
+            arch: arm64
+            ext: ''
+            output: go2rtc-freebsd-arm64
+    env:
+      CGO_ENABLED: 0
+      GOOS: ${{ matrix.os }}
+      GOARCH: ${{ matrix.arch }}
+      GOARM: ${{ matrix.arm_version }}
+      GOMIPS: ${{ matrix.gomips }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
-        with: { go-version: '1.25' }
-        
-      - name: Install UPX
-              run: |
-                sudo apt-get update
-                sudo apt-get install -y upx
-          
-      - name: Build go2rtc_win64
-        env: { GOOS: windows, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_win64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_win64, path: go2rtc.exe }
-
-      - name: Build go2rtc_win32
-        env: { GOOS: windows, GOARCH: 386 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_win32
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_win32, path: go2rtc.exe }
-
-      - name: Build go2rtc_win_arm64
-        env: { GOOS: windows, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_win_arm64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_win_arm64, path: go2rtc.exe }
-
-      - name: Build go2rtc_linux_amd64
-        env: { GOOS: linux, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_amd64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_amd64, path: go2rtc }
-
-      - name: Build go2rtc_linux_i386
-        env: { GOOS: linux, GOARCH: 386 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_i386
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_i386, path: go2rtc }
-
-      - name: Build go2rtc_linux_arm64
-        env: { GOOS: linux, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_arm64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_arm64, path: go2rtc }
-
-      - name: Build go2rtc_linux_arm
-        env: { GOOS: linux, GOARCH: arm, GOARM: 7 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_arm
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_arm, path: go2rtc }
-
-      - name: Build go2rtc_linux_armv6
-        env: { GOOS: linux, GOARCH: arm, GOARM: 6 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_armv6
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_armv6, path: go2rtc }
-
-      - name: Build go2rtc_linux_mipsel
-        env: { GOOS: linux, GOARCH: mipsle, GOMIPS: softfloat }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_mipsel
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_mipsel, path: go2rtc }
-
-      - name: Build go2rtc_mac_amd64
-        env: { GOOS: darwin, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_mac_amd64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_mac_amd64, path: go2rtc }
-
-      - name: Build go2rtc_mac_arm64
-        env: { GOOS: darwin, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_mac_arm64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_mac_arm64, path: go2rtc }
-
-      - name: Build go2rtc_freebsd_amd64
-        env: { GOOS: freebsd, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_freebsd_amd64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_freebsd_amd64, path: go2rtc }
-
-      - name: Build go2rtc_freebsd_arm64
-        env: { GOOS: freebsd, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_freebsd_arm64
-        uses: actions/upload-artifact@v4
-        with: { name: go2rtc_freebsd_arm64, path: go2rtc }
-        
-      - name:
-          run: upx --best --lzma go2rtc-* 
-          
-      - name: Upload Binaries to Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         with:
-          files: go2rtc-*
+          go-version: '1.23'  # 使用实际存在的版本
+
+      - name: Install UPX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx
+
+      - name: Build
+        run: |
+          go build -ldflags "-s -w" -trimpath -o ${{ matrix.output }}
+
+      - name: Compress with UPX (optional)
+        run: |
+          upx --best --lzma ${{ matrix.output }} || true   # 允许失败（某些架构可能不支持）
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}
+
+  release:
+    name: Release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List files (debug)
+        run: ls -R artifacts
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
