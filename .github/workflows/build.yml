@@ -116,14 +116,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with: { name: go2rtc_freebsd_arm64, path: go2rtc }
         
-        - name: Compress all Binaries with UPX
-                run: |
-                  upx --best --lzma go2rtc-*
-                  
+      - name:
+          run: upx --best --lzma go2rtc-* 
+          
       - name: Upload Binaries to Release
-              uses: softprops/action-gh-release@v1
-              if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
-              with:
-                files: go2rtc-*
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+        with:
+          files: go2rtc-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
