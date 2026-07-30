@@ -6,12 +6,15 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
   build-binaries:
     name: Build binaries
     runs-on: ubuntu-latest
     env: { CGO_ENABLED: 0 }
+        permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
